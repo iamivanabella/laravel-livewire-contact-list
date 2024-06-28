@@ -6,6 +6,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use App\Models\Contact;
 use Livewire\WithFileUploads;
+use Spatie\Activitylog\Models\Activity;
 
 #[Title('Add Contact')]
 class CreateContact extends Component
@@ -18,6 +19,13 @@ class CreateContact extends Component
     public $address = '';
     public $notes = '';
     public $avatar;
+
+    public function mount()
+    {
+        activity()
+            ->causedBy(auth()->user())
+            ->log('initiated creating contact');
+    }
 
     public function create()
     {
@@ -36,6 +44,12 @@ class CreateContact extends Component
         }
 
         Contact::create($validatedData);
+
+        activity()
+            ->performedOn($contact)
+            ->causedBy(auth()->user())
+            ->withProperties(['attributes' => $validatedData])
+            ->log('created contact');
  
         session()->flash('status', 'Contact information successfully created.');
 

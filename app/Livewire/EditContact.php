@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Contact;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Models\Activity;
 
 #[Title('Edit Contact')]
 class EditContact extends Component
@@ -31,6 +32,11 @@ class EditContact extends Component
         $this->address = $contact->address;
         $this->notes = $contact->notes;
         $this->existingAvatar = $contact->avatar;
+
+        activity()
+            ->performedOn($this->contact)
+            ->causedBy(auth()->user())
+            ->log('initiated editing contact');
     }
 
     public function update()
@@ -56,6 +62,12 @@ class EditContact extends Component
         }
 
         $this->contact->update($validatedData);
+
+        activity()
+            ->performedOn($this->contact)
+            ->causedBy(auth()->user())
+            ->withProperties(['attributes' => $validatedData])
+            ->log('updated contact');
 
         session()->flash('status', 'Contact information successfully updated.');
 
